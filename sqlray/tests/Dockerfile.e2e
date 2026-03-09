@@ -1,0 +1,14 @@
+FROM golang:1.25-bookworm AS build
+
+WORKDIR /src
+COPY sqlray/ sqlray/
+
+WORKDIR /src/sqlray
+RUN go test -tags e2e -c -o /test.bin ./tests/
+
+FROM postgres:16-bookworm
+COPY --from=build /test.bin /test.bin
+COPY sqlray/tests/e2e-entrypoint.sh /e2e-entrypoint.sh
+RUN chmod +x /e2e-entrypoint.sh
+ENV POSTGRES_PASSWORD=postgres
+ENTRYPOINT ["/e2e-entrypoint.sh"]

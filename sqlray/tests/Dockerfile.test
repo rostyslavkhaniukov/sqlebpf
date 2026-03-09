@@ -1,0 +1,12 @@
+FROM golang:1.25-bookworm AS build
+
+WORKDIR /src
+COPY sqlray/ sqlray/
+
+WORKDIR /src/sqlray
+RUN go test -tags integration -c -o /test.bin ./tests/
+
+FROM debian:bookworm-slim
+COPY --from=build /test.bin /test.bin
+ENTRYPOINT ["sh", "-c", "mount -t debugfs none /sys/kernel/debug 2>/dev/null; mount -t tracefs tracefs /sys/kernel/tracing 2>/dev/null; exec /test.bin \"$@\"", "--"]
+CMD ["-test.v", "-test.run", "TestBPF", "-test.count", "1"]

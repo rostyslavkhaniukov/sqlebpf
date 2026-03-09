@@ -1,0 +1,17 @@
+FROM rust:1-bookworm
+
+RUN rustup toolchain install nightly --component rust-src \
+    && cargo +nightly install bpf-linker
+
+WORKDIR /src
+COPY Cargo.toml ./
+COPY sqlray-ebpf/ sqlray-ebpf/
+
+RUN cargo +nightly build \
+    --manifest-path sqlray-ebpf/Cargo.toml \
+    --target=bpfel-unknown-none \
+    -Z build-std=core \
+    --release
+
+FROM debian:bookworm-slim
+COPY --from=0 /src/target/bpfel-unknown-none/release/sqlray-ebpf /sqlray-ebpf

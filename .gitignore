@@ -1,0 +1,5 @@
+# Build artifacts
+/sqlray
+!/sqlray/
+target/
+sqlray/internal/tracer/sqlray-ebpf.o

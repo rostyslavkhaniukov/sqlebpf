@@ -1,0 +1,21 @@
+[package]
+name = "sqlray-ebpf"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aya-ebpf = "0.1"
+
+[[bin]]
+name = "sqlray-ebpf"
+path = "src/main.rs"
+
+[profile.dev]
+opt-level = 2
+debug = false
+debug-assertions = false
+overflow-checks = false
+
+[profile.release]
+lto = true
+panic = "abort"

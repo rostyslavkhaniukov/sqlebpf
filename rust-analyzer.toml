@@ -1,0 +1,5 @@
+[cargo]
+target = "bpfel-unknown-none"
+
+[check]
+targets = ["bpfel-unknown-none"]
