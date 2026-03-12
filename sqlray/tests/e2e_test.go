@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/cilium/ebpf/link"
-	"github.com/cilium/ebpf/rlimit"
 	"github.com/cilium/ebpf/ringbuf"
+	"github.com/cilium/ebpf/rlimit"
 	"github.com/jackc/pgx/v5"
 
 	"sqlray/internal/tracer"

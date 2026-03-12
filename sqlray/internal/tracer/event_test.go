@@ -115,10 +115,10 @@ func TestHandleEventMultiplePreparedStatements(t *testing.T) {
 
 	// Bind for "s1" with param "hello"
 	var bindPayload1 bytes.Buffer
-	bindPayload1.WriteString("\x00")    // portal (unnamed)
-	bindPayload1.WriteString("s1\x00")  // statement name
-	bindPayload1.Write([]byte{0, 0})    // 0 format codes
-	bindPayload1.Write([]byte{0, 1})    // 1 param
+	bindPayload1.WriteString("\x00")                        // portal (unnamed)
+	bindPayload1.WriteString("s1\x00")                      // statement name
+	bindPayload1.Write([]byte{0, 0})                        // 0 format codes
+	bindPayload1.Write([]byte{0, 1})                        // 1 param
 	binary.Write(&bindPayload1, binary.BigEndian, int32(5)) // param len
 	bindPayload1.WriteString("hello")
 
@@ -141,10 +141,10 @@ func TestHandleEventMultiplePreparedStatements(t *testing.T) {
 
 	// Bind for "s2" with params "a", "b"
 	var bindPayload2 bytes.Buffer
-	bindPayload2.WriteString("\x00")    // portal
-	bindPayload2.WriteString("s2\x00")  // statement name
-	bindPayload2.Write([]byte{0, 0})    // 0 format codes
-	bindPayload2.Write([]byte{0, 2})    // 2 params
+	bindPayload2.WriteString("\x00")   // portal
+	bindPayload2.WriteString("s2\x00") // statement name
+	bindPayload2.Write([]byte{0, 0})   // 0 format codes
+	bindPayload2.Write([]byte{0, 2})   // 2 params
 	binary.Write(&bindPayload2, binary.BigEndian, int32(1))
 	bindPayload2.WriteString("a")
 	binary.Write(&bindPayload2, binary.BigEndian, int32(1))
