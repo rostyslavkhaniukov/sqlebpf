@@ -31,6 +31,11 @@ jobs:
             exit 1
           fi
 
+      - name: Build eBPF program
+        run: |
+          docker build -f Dockerfile.bpf -t sqlray-bpf-build .
+          docker run --rm sqlray-bpf-build cat /sqlray-ebpf > sqlray/internal/tracer/sqlray-ebpf.o
+
       - name: Vet
         working-directory: sqlray
         run: go vet ./...
@@ -50,6 +55,11 @@ jobs:
         with:
           go-version-file: sqlray/go.mod
           cache-dependency-path: sqlray/go.sum
+
+      - name: Build eBPF program
+        run: |
+          docker build -f Dockerfile.bpf -t sqlray-bpf-build .
+          docker run --rm sqlray-bpf-build cat /sqlray-ebpf > sqlray/internal/tracer/sqlray-ebpf.o
 
       - name: Run tests
         working-directory: sqlray
