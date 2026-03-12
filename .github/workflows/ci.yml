@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: sqlray/go.mod
+          cache-dependency-path: sqlray/go.sum
+
+      - name: Check formatting
+        working-directory: sqlray
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "Files not formatted:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet
+        working-directory: sqlray
+        run: go vet ./...
+
+      - name: Staticcheck
+        uses: dominikh/staticcheck-action@v1
+        with:
+          working-directory: sqlray
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: sqlray/go.mod
+          cache-dependency-path: sqlray/go.sum
+
+      - name: Run tests
+        working-directory: sqlray
+        run: go test -v -count 1 -race ./...
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: sqlray/go.mod
+          cache-dependency-path: sqlray/go.sum
+
+      - name: Build eBPF program
+        run: |
+          docker build -f Dockerfile.bpf -t sqlray-bpf-build .
+          docker run --rm sqlray-bpf-build cat /sqlray-ebpf > sqlray/internal/tracer/sqlray-ebpf.o
+
+      - name: Build binary
+        working-directory: sqlray
+        run: CGO_ENABLED=0 go build -o ../sqlray ./cmd/sqlray
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: sqlray
+          path: sqlray
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build eBPF program
+        run: |
+          docker build -f Dockerfile.bpf -t sqlray-bpf-build .
+          docker run --rm sqlray-bpf-build cat /sqlray-ebpf > sqlray/internal/tracer/sqlray-ebpf.o
+
+      - name: Run integration tests
+        run: |
+          docker build -f sqlray/tests/Dockerfile.test -t sqlray-test .
+          docker run --rm --privileged sqlray-test
+
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build eBPF program
+        run: |
+          docker build -f Dockerfile.bpf -t sqlray-bpf-build .
+          docker run --rm sqlray-bpf-build cat /sqlray-ebpf > sqlray/internal/tracer/sqlray-ebpf.o
+
+      - name: Run E2E tests
+        run: |
+          docker build -f sqlray/tests/Dockerfile.e2e -t sqlray-e2e .
+          docker run --rm --privileged sqlray-e2e
